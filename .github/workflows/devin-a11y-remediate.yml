@@ -1,0 +1,89 @@
+name: Devin Accessibility Remediation
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      event_fixture:
+        description: "Optional event fixture path committed to this repo"
+        required: false
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  remediate:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.action == 'labeled' && github.event.label.name == 'devin:approved')
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    env:
+      AUTOMATION_REPO: ${{ vars.AUTOMATION_REPO || format('{0}/devin-a11y-remediation-fleet', github.repository_owner) }}
+      AUTOMATION_REF: ${{ vars.AUTOMATION_REF || 'main' }}
+      TARGET_REPO: ${{ github.repository }}
+      DEVIN_API_KEY: ${{ secrets.DEVIN_API_KEY }}
+      DEVIN_ORG_ID: ${{ secrets.DEVIN_ORG_ID }}
+      GITHUB_TOKEN: ${{ github.token }}
+      TRIGGER_LABEL: devin:approved
+      MAX_ACU_LIMIT: ${{ vars.MAX_ACU_LIMIT || '10' }}
+      POLL_INTERVAL_SECONDS: ${{ vars.POLL_INTERVAL_SECONDS || '60' }}
+      POLL_TIMEOUT_SECONDS: ${{ vars.POLL_TIMEOUT_SECONDS || '7200' }}
+
+    steps:
+      - name: Checkout automation repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.AUTOMATION_REPO }}
+          ref: ${{ env.AUTOMATION_REF }}
+          path: automation
+
+      - name: Build automation container
+        run: docker build -t devin-a11y-fleet ./automation
+
+      - name: Write GitHub event payload
+        if: github.event_name == 'issues'
+        run: |
+          cat > event.json <<'JSON'
+          ${{ toJson(github.event) }}
+          JSON
+
+      - name: Use manual event fixture
+        if: github.event_name == 'workflow_dispatch' && inputs.event_fixture != ''
+        run: cp "${{ inputs.event_fixture }}" event.json
+
+      - name: Dispatch Devin remediation
+        run: |
+          mkdir -p runs
+          docker run --rm \
+            -e DEVIN_API_KEY \
+            -e DEVIN_ORG_ID \
+            -e GITHUB_TOKEN \
+            -e TARGET_REPO \
+            -e TRIGGER_LABEL \
+            -e MAX_ACU_LIMIT \
+            -e POLL_INTERVAL_SECONDS \
+            -e POLL_TIMEOUT_SECONDS \
+            -v "$PWD/event.json:/event.json:ro" \
+            -v "$PWD/runs:/app/runs" \
+            devin-a11y-fleet run-event --event-path /event.json
+
+      - name: Generate remediation report
+        if: always()
+        run: |
+          docker run --rm \
+            -v "$PWD/runs:/app/runs" \
+            -v "$PWD/reports:/app/reports" \
+            devin-a11y-fleet report --runs-path /app/runs/runs.jsonl --format markdown --out /app/reports/devin-a11y-report.md
+
+      - name: Upload run artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: devin-a11y-run
+          path: |
+            runs/
+            reports/
