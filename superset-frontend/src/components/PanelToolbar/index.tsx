@@ -18,6 +18,7 @@
  */
 import { useMemo } from 'react';
 import { useMenu } from 'src/core';
+import { t } from '@apache-superset/core/translation';
 import { css, useTheme } from '@apache-superset/core/theme';
 import { Button, Divider, Dropdown } from '@superset-ui/core/components';
 import { Menu, MenuItemType } from '@superset-ui/core/components/Menu';
@@ -143,6 +144,8 @@ const PanelToolbar = ({
             showMarginRight={false}
             color="default"
             variant="text"
+            aria-label={t('More panel actions')}
+            aria-haspopup="true"
             css={css`
               padding: 8px;
             `}
