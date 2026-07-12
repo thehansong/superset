@@ -45,3 +45,19 @@ test('renders nothing when no actions registered', () => {
   const { container } = render(<PanelToolbar viewId="empty.location" />);
   expect(container).toBeEmptyDOMElement();
 });
+
+test('overflow menu trigger has a descriptive accessible name', () => {
+  registerToolbarAction(
+    'test.overflowLocation',
+    'test-overflow-cmd',
+    'Secondary Action',
+    jest.fn(),
+    'secondary',
+  );
+
+  render(<PanelToolbar viewId="test.overflowLocation" />);
+
+  const trigger = screen.getByRole('button', { name: 'More panel actions' });
+  expect(trigger).toBeInTheDocument();
+  expect(trigger).toHaveAttribute('aria-haspopup', 'true');
+});
