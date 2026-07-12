@@ -270,6 +270,7 @@ const FilterBarSettings = () => {
       >
         <Button
           buttonStyle="link"
+          aria-label={t('Filter bar settings')}
           css={css`
             padding: 0;
           `}

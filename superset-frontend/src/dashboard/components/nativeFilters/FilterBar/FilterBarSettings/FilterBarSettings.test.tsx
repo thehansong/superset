@@ -87,6 +87,20 @@ test('Dropdown trigger renders with dashboard edit permissions', async () => {
   expect(screen.getByRole('img', { name: 'setting' })).toBeInTheDocument();
 });
 
+test('Trigger exposes a descriptive accessible name and popup semantics', async () => {
+  await setup();
+  const settingsButton = screen.getByRole('button', {
+    name: 'Filter bar settings',
+  });
+  expect(settingsButton).toBeInTheDocument();
+  expect(settingsButton).toHaveClass('ant-dropdown-trigger');
+
+  userEvent.click(settingsButton);
+  expect(
+    await screen.findByText('Add or edit filters and controls'),
+  ).toBeInTheDocument();
+});
+
 test('Dropdown trigger does not render without dashboard edit permissions', async () => {
   await setup({
     dash_edit_perm: false,
@@ -100,7 +114,7 @@ test('Dropdown trigger does not render without dashboard edit permissions', asyn
 test('Popover shows cross-filtering option on by default', async () => {
   await setup();
   const settingsButton = screen.getByRole('button', {
-    name: 'setting',
+    name: 'Filter bar settings',
   });
   userEvent.click(settingsButton);
   expect(screen.getByText('Enable cross-filtering')).toBeInTheDocument();
@@ -118,7 +132,7 @@ test('Can enable/disable cross-filtering', async () => {
   });
   await setup();
   const settingsButton = screen.getByRole('button', {
-    name: 'setting',
+    name: 'Filter bar settings',
   });
   userEvent.click(settingsButton);
   const initialCheckbox = screen.getByRole('checkbox');
@@ -133,7 +147,7 @@ test('Can enable/disable cross-filtering', async () => {
 test('Popover opens with "Vertical" selected', async () => {
   await setup();
   const settingsButton = screen.getByRole('button', {
-    name: 'setting',
+    name: 'Filter bar settings',
   });
   userEvent.click(settingsButton);
   userEvent.hover(screen.getByText('Orientation of filter bar'));
@@ -149,7 +163,7 @@ test('Popover opens with "Vertical" selected', async () => {
 test('Popover opens with "Horizontal" selected', async () => {
   await setup({ filterBarOrientation: FilterBarOrientation.Horizontal });
   const settingsButton = screen.getByRole('button', {
-    name: 'setting',
+    name: 'Filter bar settings',
   });
   userEvent.click(settingsButton);
   userEvent.hover(screen.getByText('Orientation of filter bar'));
@@ -175,7 +189,7 @@ test('On selection change, send request and update checked value', async () => {
   await setup();
 
   const settingsButton = screen.getByRole('button', {
-    name: 'setting',
+    name: 'Filter bar settings',
   });
   userEvent.click(settingsButton);
   userEvent.hover(screen.getByText('Orientation of filter bar'));
@@ -207,7 +221,9 @@ test('On selection change, send request and update checked value', async () => {
   );
 
   await waitFor(() => {
-    userEvent.click(screen.getByRole('button', { name: 'setting' }));
+    userEvent.click(
+      screen.getByRole('button', { name: 'Filter bar settings' }),
+    );
     userEvent.hover(screen.getByText('Orientation of filter bar'));
     const updatedHorizontalItem = screen.getByText('Horizontal (Top)');
     expect(
