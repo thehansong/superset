@@ -89,14 +89,14 @@ export const FilterItem = styled.button`
     }
 
     & i svg {
-      opacity: 35%;
+      color: ${theme.colorIcon};
       margin-right: ${theme.sizeUnit}px;
-      transition: opacity ease-in-out ${theme.motionDurationMid};
+      transition: color ease-in-out ${theme.motionDurationMid};
     }
 
     &:hover i svg,
     &:focus-visible i svg {
-      opacity: 1;
+      color: ${theme.colorIconHover};
     }
   `}
 `;

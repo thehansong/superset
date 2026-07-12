@@ -18,7 +18,9 @@
  */
 import { ReactNode } from 'react';
 import { Store } from 'redux';
+import { supersetTheme } from '@apache-superset/core/theme';
 import { render } from 'spec/helpers/testing-library';
+import FilterIndicator from 'src/dashboard/components/FiltersBadge/FilterIndicator';
 import {
   CHART_RENDERING_SUCCEEDED,
   CHART_UPDATE_SUCCEEDED,
@@ -142,6 +144,40 @@ test('native filters: shows the indicator when filters have been applied', () =>
   const { getByTestId } = setup(store);
   expect(getByTestId('applied-filter-count')).toHaveTextContent('1');
   expect(getByTestId('mock-details-panel')).toBeInTheDocument();
+});
+
+// Accessibility: applied-filter detail icon contrast (WCAG 1.4.11 non-text-contrast)
+test('applied-filter detail icons do not use low-opacity styling', () => {
+  const { getByRole } = render(
+    <FilterIndicator
+      indicator={{
+        column: 'region',
+        name: 'Region',
+        value: ['foo'],
+        path: ['LABEL-region'],
+      }}
+      onClick={() => {}}
+    />,
+  );
+  const filterItem = getByRole('button');
+
+  // The 35% opacity that dropped icons below the 3:1 contrast minimum must be gone.
+  expect(filterItem).not.toHaveStyleRule('opacity', '35%', {
+    target: 'i svg',
+  });
+
+  // The default (non-hover, non-focus) state uses the accessible icon token.
+  expect(filterItem).toHaveStyleRule('color', supersetTheme.colorIcon, {
+    target: /^[^:]+ i svg$/,
+  });
+
+  // Hover and keyboard-focus states remain visually distinguishable.
+  expect(filterItem).toHaveStyleRule('color', supersetTheme.colorIconHover, {
+    target: ':hover i svg',
+  });
+  expect(filterItem).toHaveStyleRule('color', supersetTheme.colorIconHover, {
+    target: ':focus-visible i svg',
+  });
 });
 
 // Auto-refresh tests
